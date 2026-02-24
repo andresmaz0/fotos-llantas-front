@@ -147,7 +147,8 @@
         const statusToast = document.getElementById('statusToast');
         const masterToggleBtn = document.getElementById('masterToggleBtn');
         const createFolderBtn = document.getElementById('createFolderBtn');
-        const ENDPOINT = "https://registro-fotografico-de-llantas-de.onrender.com/api/v1/upload";
+        const ENDPOINT = "http://localhost:8000";
+        // const ENDPOINT = "https://registro-fotografico-de-llantas-de.onrender.com";
 
         // Generar Tarjetas
         fields.forEach((field, index) => {
@@ -204,10 +205,10 @@
 
             try {
                 // Suponiendo que el endpoint maneja la creación de carpeta
-                const response = await fetch(ENDPOINT + 'crear-carpeta', {
+                const response = await fetch(ENDPOINT + '/api/v1/create-folder', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ referencia: reference })
+                    body: JSON.stringify({ folder_name: reference })
                 });
 
                 if (response.ok) {
@@ -319,7 +320,7 @@
             submitBtn.innerHTML = `<span class="loading-pulse">ENVIANDO FOTOS...</span>`;
 
             try {
-                const response = await fetch(ENDPOINT, { method: 'POST', body: formData });
+                const response = await fetch(ENDPOINT + '/api/v1/upload', { method: 'POST', body: formData });
                 if (response.ok) {
                     showToast("¡Éxito!", "Las fotos se han enviado correctamente.", "success");
                     tireForm.reset();
