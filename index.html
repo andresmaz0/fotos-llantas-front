@@ -41,6 +41,16 @@
             z-index: 10;
         }
 
+        /* Estilos para el buscador desplegable */
+        .dropdown-content {
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+        }
+        .dropdown-content.show {
+            display: block;
+        }
+
         @keyframes pulse-green {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -48,11 +58,13 @@
         .loading-pulse {
             animation: pulse-green 1.5s infinite;
         }
+
+        #selectionModal.hidden { display: none; }
     </style>
 </head>
 <body class="pb-40">
 
-    <!-- Header con Nueva Funcionalidad de Carpeta -->
+    <!-- Header y Controles de Carpeta -->
     <div class="bg-white rounded-b-[40px] shadow-sm p-6 mb-8 border-b-2 border-green-100">
         <div class="max-w-4xl mx-auto">
             <div class="flex items-center justify-between mb-6">
@@ -67,40 +79,62 @@
                         <p class="text-green-600 font-semibold text-sm">Registro de Inspección</p>
                     </div>
                 </div>
-                <button 
-                    type="button" 
-                    id="masterToggleBtn"
-                    data-state="select-all"
-                    class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-3 rounded-2xl text-xs transition-all active:scale-90"
-                >
+                <button type="button" id="masterToggleBtn" data-state="select-all" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-3 rounded-2xl text-xs transition-all active:scale-90">
                     DESMARCAR TODOS
                 </button>
             </div>
 
-            <div class="flex flex-col gap-2">
-                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-4">Referencia de la llanta</label>
-                <div class="flex gap-3">
-                    <input 
-                        type="text" 
-                        id="tireRef" 
-                        placeholder="Escribe el nombre aquí..." 
-                        class="flex-1 bg-slate-50 border-2 border-slate-100 rounded-[24px] px-6 py-4 text-lg font-semibold text-slate-700 focus:border-green-400 focus:bg-white focus:ring-0 outline-none transition-all shadow-inner"
-                    >
-                    <button 
-                        type="button"
-                        id="createFolderBtn"
-                        class="bg-green-600 hover:bg-green-700 text-white font-bold px-6 rounded-[24px] shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 min-w-[140px]"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                        </svg>
-                        Crear Carpeta
+            <!-- Sección de Referencia y Creación -->
+            <div class="flex flex-col gap-4 mb-6">
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-4 text-[10px]">Nueva Referencia</label>
+                    <div class="flex gap-3">
+                        <input type="text" id="tireRef" placeholder="Nombre..." class="flex-1 bg-slate-50 border-2 border-slate-100 rounded-[24px] px-6 py-4 text-lg font-semibold text-slate-700 focus:border-green-400 focus:bg-white outline-none transition-all shadow-inner">
+                        <button type="button" id="createFolderBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 rounded-[24px] shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 min-w-[120px] text-sm">
+                            Crear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Buscador y Selector de Carpetas Existentes -->
+                <div class="flex flex-col gap-2 relative">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-4 text-[10px]">Carpeta Existente</label>
+                    <div class="flex gap-3">
+                        <div class="flex-1 relative">
+                            <input type="text" id="folderSearchInput" placeholder="Buscar..." class="w-full bg-slate-50 border-2 border-slate-100 rounded-[24px] px-6 py-4 text-lg font-semibold text-slate-700 focus:border-green-400 outline-none transition-all shadow-inner">
+                            <div id="folderDropdown" class="dropdown-content absolute left-0 right-0 top-full mt-2 bg-white border-2 border-slate-100 rounded-[24px] shadow-xl z-[100] p-2">
+                                <div id="folderList" class="flex flex-col gap-1">
+                                    <p class="text-center text-slate-400 py-4 text-sm">Usa "Buscar" para cargar</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="fetchFoldersBtn" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 rounded-[24px] shadow-md transition-all active:scale-95 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </button>
+                    </div>
+                    
+                    <button type="button" id="selectFolderBtn" class="mt-2 w-full bg-green-100 text-green-700 font-extrabold py-4 rounded-[24px] border-2 border-green-200 hover:bg-green-200 transition-all flex items-center justify-center gap-2 text-sm uppercase">
+                        Seleccionar Carpeta
                     </button>
+
+                    <!-- Indicador de Carpeta Activa con Opción de Quitar (X) -->
+                    <div id="activeFolderDisplay" class="hidden mt-2 p-1 bg-green-500 text-white rounded-[20px] flex items-center justify-between shadow-lg">
+                        <div class="flex items-center gap-3 pl-4 py-2">
+                            <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full uppercase font-bold">Activa</span>
+                            <span id="currentFolderName" class="font-bold truncate max-w-[180px]">Ninguna</span>
+                        </div>
+                        <button id="removeFolderBtn" class="w-10 h-10 bg-green-600 hover:bg-red-500 rounded-full flex items-center justify-center transition-colors active:scale-90 ml-2 shadow-inner">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Grid de Fotos -->
     <div class="max-w-5xl mx-auto px-4">
         <form id="tireForm">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="photoGrid">
@@ -109,19 +143,31 @@
 
             <div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#f0fdf4] via-[#f0fdf4] to-transparent z-50">
                 <div class="max-w-md mx-auto">
-                    <button 
-                        type="submit" 
-                        id="submitBtn"
-                        class="btn-large w-full bg-green-600 hover:bg-green-700 text-white font-black shadow-[0_10px_30px_rgba(22,163,74,0.4)] transition-all flex items-center justify-center gap-3 active:scale-95 uppercase"
-                    >
+                    <button type="submit" id="submitBtn" disabled class="btn-large w-full bg-slate-400 cursor-not-allowed text-white font-black shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 uppercase">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                         </svg>
                         Enviar Fotos
                     </button>
+                    <p id="lockMessage" class="text-center text-[10px] font-bold text-red-500 mt-2 uppercase tracking-widest italic">Selecciona una carpeta para habilitar</p>
                 </div>
             </div>
         </form>
+    </div>
+
+    <!-- Modal de Selección -->
+    <div id="selectionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-[40px] p-8 max-w-sm w-full shadow-2xl text-center border-4 border-green-500 transform transition-all">
+            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">📁</div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2 italic">¡Seleccionada!</h2>
+            <p class="text-slate-500 font-medium mb-8 leading-relaxed">
+                Has seleccionado la carpeta:<br>
+                <span id="modalFolderName" class="text-green-600 font-black text-xl uppercase underline">"X"</span>
+            </p>
+            <button id="closeModalBtn" class="w-full py-4 bg-slate-800 text-white rounded-full font-bold hover:bg-slate-900 transition-all active:scale-95">
+                CONTINUAR
+            </button>
+        </div>
     </div>
 
     <div id="statusToast" class="fixed top-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white rounded-[30px] shadow-2xl p-6 transform -translate-y-40 opacity-0 transition-all duration-500 z-[60] border-2 border-green-500">
@@ -135,55 +181,48 @@
     </div>
 
     <script>
-        const fields = [
-            "Marca", "Diseño", "Dimensión", "Banda", "Presión", "Carga", 
-            "Índice de Carga", "Símbolo de Velocidad", "DOT", "Serie", 
-            "Made IN", "Capas", "LR", "PR", "Sellomatic", 
-            "Banda Protectora", "Costado"
-        ];
-
-        const photoGrid = document.getElementById('photoGrid');
-        const tireForm = document.getElementById('tireForm');
-        const statusToast = document.getElementById('statusToast');
-        const masterToggleBtn = document.getElementById('masterToggleBtn');
-        const createFolderBtn = document.getElementById('createFolderBtn');
+        const fields = ["Marca", "Diseño", "Dimensión", "Banda", "Presión", "Carga", "Índice de Carga", "Símbolo de Velocidad", "DOT", "Serie", "Made IN", "Capas", "LR", "PR", "Sellomatic", "Banda Protectora", "Costado"];
         const ENDPOINT = "http://localhost:8000";
-        // const ENDPOINT = "https://registro-fotografico-de-llantas-de.onrender.com";
+        
+        let selectedFolderId = null;
+        let selectedFolderName = "";
+        let allFolders = [];
+
+        // Elementos UI
+        const folderSearchInput = document.getElementById('folderSearchInput');
+        const folderDropdown = document.getElementById('folderDropdown');
+        const folderList = document.getElementById('folderList');
+        const fetchFoldersBtn = document.getElementById('fetchFoldersBtn');
+        const selectFolderBtn = document.getElementById('selectFolderBtn');
+        const removeFolderBtn = document.getElementById('removeFolderBtn');
+        const activeFolderDisplay = document.getElementById('activeFolderDisplay');
+        const selectionModal = document.getElementById('selectionModal');
+        const modalFolderName = document.getElementById('modalFolderName');
+        const submitBtn = document.getElementById('submitBtn');
+        const lockMessage = document.getElementById('lockMessage');
+        const currentFolderNameSpan = document.getElementById('currentFolderName');
 
         // Generar Tarjetas
+        const photoGrid = document.getElementById('photoGrid');
         fields.forEach((field, index) => {
             const card = document.createElement('div');
             card.className = "tire-card bg-white rounded-[32px] shadow-sm p-6 relative flex flex-col gap-4 border-2 border-transparent";
             card.id = `card-${index}`;
             card.innerHTML = `
                 <div class="flex items-center justify-between gap-2">
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-1">Paso ${index + 1}</span>
-                        <h3 class="font-bold text-slate-800 text-base leading-tight">${field}</h3>
-                    </div>
+                    <div class="flex flex-col"><span class="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-1">Paso ${index + 1}</span><h3 class="font-bold text-slate-800 text-base leading-tight">${field}</h3></div>
                     <label class="relative inline-flex items-center cursor-pointer toggle-container">
                         <input type="checkbox" checked class="sr-only peer toggle-send" data-index="${index}">
-                        <div class="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500 shadow-inner"></div>
+                        <div class="w-14 h-8 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
                     </label>
                 </div>
-                
                 <div class="relative">
-                    <button type="button" class="delete-btn-overlay hidden w-10 h-10 bg-red-500 text-white rounded-full shadow-lg flex items-center justify-center active:scale-75 transition-all pointer-events-auto" data-index="${index}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                    
-                    <!-- capture="camera" permite abrir la cámara directamente en móviles -->
+                    <button type="button" class="delete-btn-overlay hidden w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center" data-index="${index}"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg></button>
                     <input type="file" id="file-${index}" accept="image/*" capture="camera" class="hidden file-input">
-                    <label for="file-${index}" class="file-label block w-full h-56 bg-slate-50 border-4 border-dashed border-slate-100 rounded-[28px] cursor-pointer hover:bg-green-50 hover:border-green-200 transition-all flex items-center justify-center overflow-hidden active:scale-95">
+                    <label for="file-${index}" class="file-label block w-full h-56 bg-slate-50 border-4 border-dashed border-slate-100 rounded-[28px] cursor-pointer hover:bg-green-50 flex items-center justify-center overflow-hidden transition-all">
                         <div class="text-center p-6 preview-placeholder flex flex-col items-center">
-                            <div class="bg-white w-16 h-16 rounded-3xl flex items-center justify-center shadow-md mb-4 rotate-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                </svg>
-                            </div>
-                            <span class="text-sm font-extrabold text-slate-400 uppercase tracking-tighter italic">Cámara / Galería</span>
+                            <div class="bg-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-md mb-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg></div>
+                            <span class="text-xs font-bold text-slate-400 uppercase italic">Cámara</span>
                         </div>
                         <img src="" class="hidden w-full h-full object-cover img-preview">
                     </label>
@@ -192,119 +231,140 @@
             photoGrid.appendChild(card);
         });
 
-        // Crear Carpeta (Servicio independiente)
-        createFolderBtn.addEventListener('click', async () => {
-            const reference = document.getElementById('tireRef').value.trim();
-            if (!reference) {
-                showToast("¡Atención!", "Debes escribir una referencia primero.", "error");
-                return;
-            }
-
-            createFolderBtn.disabled = true;
-            createFolderBtn.innerHTML = `<span class="animate-pulse">Creando...</span>`;
-
+        // Servicio: Buscar Carpetas Existentes
+        fetchFoldersBtn.addEventListener('click', async () => {
+            fetchFoldersBtn.disabled = true;
+            fetchFoldersBtn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+            
             try {
-                // Suponiendo que el endpoint maneja la creación de carpeta
-                const response = await fetch(ENDPOINT + '/api/v1/create-folder', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ folder_name: reference })
-                });
-
-                if (response.ok) {
-                    showToast("Carpeta Creada", `Se ha iniciado el registro para: ${reference}`, "success");
-                } else {
-                    throw new Error();
+                const response = await fetch(ENDPOINT + '/api/v1/list-folders');
+                const data = await response.json();
+                
+                if (data.status === "success") {
+                    allFolders = data.folders;
+                    renderFolderList(allFolders);
+                    folderDropdown.classList.add('show');
                 }
             } catch (err) {
-                // Incluso si falla, informamos al usuario (en este demo mostramos éxito para visualización)
-                showToast("Carpeta Lista", `Referencia "${reference}" registrada.`, "success");
+                // Mock para el demo
+                //allFolders = [{id: "1tC1tIdkHT9SA_zaBwQ8AYSgVAhsW20Kx", name: "fotos_camion_23"}, {id: "2", name: "inspeccion_sur"}];
+                renderFolderList(allFolders);
+                folderDropdown.classList.add('show');
             } finally {
-                createFolderBtn.disabled = false;
-                createFolderBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
-                    Crear Carpeta
-                `;
+                fetchFoldersBtn.disabled = false;
+                fetchFoldersBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>`;
             }
         });
 
-        // Lógica de UI básica
+        function renderFolderList(folders) {
+            folderList.innerHTML = '';
+            if (folders.length === 0) {
+                folderList.innerHTML = '<p class="text-center text-slate-400 py-4 text-sm">No hay resultados</p>';
+                return;
+            }
+            folders.forEach(folder => {
+                const btn = document.createElement('button');
+                btn.type = "button";
+                btn.className = "text-left px-4 py-4 hover:bg-green-50 rounded-xl transition-all text-slate-700 font-bold text-sm flex items-center gap-3 border-b border-slate-50 last:border-0";
+                btn.innerHTML = `<span>📁</span> <span class="truncate">${folder.name}</span>`;
+                btn.onclick = () => {
+                    folderSearchInput.value = folder.name;
+                    selectedFolderId = folder.id;
+                    selectedFolderName = folder.name;
+                    folderDropdown.classList.remove('show');
+                };
+                folderList.appendChild(btn);
+            });
+        }
+
+        folderSearchInput.oninput = (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allFolders.filter(f => f.name.toLowerCase().includes(term));
+            renderFolderList(filtered);
+            if(term.length > 0) folderDropdown.classList.add('show');
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.relative')) folderDropdown.classList.remove('show');
+        });
+
+        // Seleccionar Carpeta
+        selectFolderBtn.onclick = () => {
+            if (!selectedFolderId) {
+                showToast("¡Atención!", "Debes buscar y elegir una carpeta", "error");
+                return;
+            }
+            
+            modalFolderName.textContent = `"${selectedFolderName}"`;
+            selectionModal.classList.remove('hidden');
+            
+            enableSubmit();
+            
+            activeFolderDisplay.classList.remove('hidden');
+            currentFolderNameSpan.textContent = selectedFolderName;
+            
+            // Ocultar buscador para limpiar UI
+            selectFolderBtn.classList.add('hidden');
+            folderSearchInput.closest('.flex').classList.add('hidden');
+        };
+
+        // Función para habilitar envío
+        function enableSubmit() {
+            submitBtn.disabled = false;
+            submitBtn.classList.replace('bg-slate-400', 'bg-green-600');
+            submitBtn.classList.replace('cursor-not-allowed', 'hover:bg-green-700');
+            lockMessage.classList.add('hidden');
+        }
+
+        // Función para deshabilitar envío
+        function disableSubmit() {
+            submitBtn.disabled = true;
+            submitBtn.classList.replace('bg-green-600', 'bg-slate-400');
+            submitBtn.classList.replace('hover:bg-green-700', 'cursor-not-allowed');
+            lockMessage.classList.remove('hidden');
+        }
+
+        // Quitar Carpeta Seleccionada (X)
+        removeFolderBtn.onclick = () => {
+            selectedFolderId = null;
+            selectedFolderName = "";
+            folderSearchInput.value = "";
+            
+            disableSubmit();
+            
+            activeFolderDisplay.classList.add('hidden');
+            selectFolderBtn.classList.remove('hidden');
+            folderSearchInput.closest('.flex').classList.remove('hidden');
+            
+            showToast("Reiniciado", "Carpeta quitada. Selecciona una nueva.", "success");
+        };
+
+        document.getElementById('closeModalBtn').onclick = () => selectionModal.classList.add('hidden');
+
+        // Master Toggle
         masterToggleBtn.addEventListener('click', () => {
             const isSelectingAll = masterToggleBtn.dataset.state === 'select-all';
-            const toggles = document.querySelectorAll('.toggle-send');
-            toggles.forEach(toggle => {
+            document.querySelectorAll('.toggle-send').forEach(toggle => {
                 toggle.checked = !isSelectingAll;
-                updateCardState(toggle);
+                const card = document.getElementById(`card-${toggle.dataset.index}`);
+                toggle.checked ? card.classList.remove('disabled') : card.classList.add('disabled');
             });
-            if (isSelectingAll) {
-                masterToggleBtn.dataset.state = 'deselect-all';
-                masterToggleBtn.textContent = 'MARCAR TODOS';
-            } else {
-                masterToggleBtn.dataset.state = 'select-all';
-                masterToggleBtn.textContent = 'DESMARCAR TODOS';
-            }
+            masterToggleBtn.dataset.state = isSelectingAll ? 'deselect-all' : 'select-all';
+            masterToggleBtn.textContent = isSelectingAll ? 'MARCAR TODOS' : 'DESMARCAR TODOS';
         });
 
-        function updateCardState(checkbox) {
-            const index = checkbox.dataset.index;
-            const card = document.getElementById(`card-${index}`);
-            checkbox.checked ? card.classList.remove('disabled') : card.classList.add('disabled');
-        }
-
-        function clearImage(index) {
-            const card = document.getElementById(`card-${index}`);
-            const fileInput = document.getElementById(`file-${index}`);
-            const preview = card.querySelector('.img-preview');
-            const placeholder = card.querySelector('.preview-placeholder');
-            const delBtn = card.querySelector('.delete-btn-overlay');
-            fileInput.value = "";
-            preview.src = "";
-            preview.classList.add('hidden');
-            placeholder.classList.remove('hidden');
-            delBtn.classList.add('hidden');
-            card.classList.remove('border-green-400', 'shadow-lg');
-        }
-
-        photoGrid.addEventListener('click', (e) => {
-            const delBtn = e.target.closest('.delete-btn-overlay');
-            if (delBtn) clearImage(delBtn.dataset.index);
-        });
-
-        photoGrid.addEventListener('change', (e) => {
-            if (e.target.classList.contains('file-input')) {
-                const file = e.target.files[0];
-                const card = e.target.closest('.tire-card');
-                const preview = card.querySelector('.img-preview');
-                const placeholder = card.querySelector('.preview-placeholder');
-                const delBtn = card.querySelector('.delete-btn-overlay');
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        preview.src = ev.target.result;
-                        preview.classList.remove('hidden');
-                        placeholder.classList.add('hidden');
-                        delBtn.classList.remove('hidden');
-                        card.classList.add('border-green-400', 'shadow-lg');
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
-            if (e.target.classList.contains('toggle-send')) updateCardState(e.target);
-        });
-
-        // Envío de Formulario (Solo Fotos)
-        tireForm.addEventListener('submit', async (e) => {
+        // Envío de Formulario
+        document.getElementById('tireForm').onsubmit = async (e) => {
             e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
             const formData = new FormData();
             let filesAdded = 0;
+
+            formData.append('folder_id', selectedFolderId);
 
             document.querySelectorAll('.toggle-send').forEach((toggle, idx) => {
                 if (toggle.checked) {
                     const input = document.getElementById(`file-${idx}`);
-                    if (input.files && input.files[0]) {
+                    if (input.files[0]) {
                         formData.append(fields[idx].toLowerCase().replace(/ /g, '_'), input.files[0]);
                         filesAdded++;
                     }
@@ -312,52 +372,75 @@
             });
 
             if (filesAdded === 0) {
-                showToast("¡Sin archivos!", "No has seleccionado fotos para enviar.", "error");
+                showToast("Sin fotos", "Toma al menos una foto primero", "error");
                 return;
             }
 
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<span class="loading-pulse">ENVIANDO FOTOS...</span>`;
+            submitBtn.innerHTML = `<span class="loading-pulse italic">SUBIENDO...</span>`;
 
             try {
-                const response = await fetch(ENDPOINT + '/api/v1/upload', { method: 'POST', body: formData });
-                if (response.ok) {
-                    showToast("¡Éxito!", "Las fotos se han enviado correctamente.", "success");
-                    tireForm.reset();
+                const res = await fetch(ENDPOINT + '/api/v1/upload', { method: 'POST', body: formData });
+                if (res.ok) {
+                    showToast("¡Enviado!", "Registro completado con éxito", "success");
+                    document.getElementById('tireForm').reset();
                     fields.forEach((_, i) => clearImage(i));
-                } else {
-                    throw new Error();
                 }
-            } catch (error) {
-                showToast("¡Error!", "No se pudo realizar el envío.", "error");
+            } catch (err) {
+                showToast("Fallo de red", "No se pudo conectar con el servidor", "error");
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Enviar Fotos
-                `;
+                submitBtn.innerHTML = `Enviar Fotos`;
             }
-        });
+        };
+
+        function clearImage(i) {
+            const c = document.getElementById(`card-${i}`);
+            const input = document.getElementById(`file-${i}`);
+            input.value = "";
+            c.querySelector('.img-preview').classList.add('hidden');
+            c.querySelector('.preview-placeholder').classList.remove('hidden');
+            c.querySelector('.delete-btn-overlay').classList.add('hidden');
+            c.classList.remove('border-green-400', 'shadow-lg');
+        }
+
+        photoGrid.onchange = (e) => {
+            if (e.target.classList.contains('file-input')) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const card = e.target.closest('.tire-card');
+                        const img = card.querySelector('.img-preview');
+                        img.src = ev.target.result;
+                        img.classList.remove('hidden');
+                        card.querySelector('.preview-placeholder').classList.add('hidden');
+                        card.querySelector('.delete-btn-overlay').classList.remove('hidden');
+                        card.classList.add('border-green-400', 'shadow-lg');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            if (e.target.classList.contains('toggle-send')) {
+                const card = document.getElementById(`card-${e.target.dataset.index}`);
+                e.target.checked ? card.classList.remove('disabled') : card.classList.add('disabled');
+            }
+        };
+
+        photoGrid.onclick = (e) => {
+            const btn = e.target.closest('.delete-btn-overlay');
+            if (btn) clearImage(btn.dataset.index);
+        };
 
         function showToast(title, desc, type) {
-            statusToast.classList.remove('-translate-y-40', 'opacity-0');
-            statusToast.classList.add('translate-y-0', 'opacity-100');
+            const t = document.getElementById('statusToast');
+            t.classList.replace('-translate-y-40', 'translate-y-0'); t.classList.replace('opacity-0', 'opacity-100');
             document.getElementById('statusTitle').textContent = title;
             document.getElementById('statusDesc').textContent = desc;
-            const icon = document.getElementById('statusIcon');
-            if (type === 'success') {
-                statusToast.classList.replace('border-red-500', 'border-green-500');
-                icon.innerHTML = '✅';
-            } else {
-                statusToast.classList.replace('border-green-500', 'border-red-500');
-                icon.innerHTML = '⚠️';
-            }
+            document.getElementById('statusIcon').innerHTML = type === 'success' ? '✅' : '⚠️';
             setTimeout(() => {
-                statusToast.classList.add('-translate-y-40', 'opacity-0');
-                statusToast.classList.remove('translate-y-0', 'opacity-100');
-            }, 4000);
+                t.classList.replace('translate-y-0', '-translate-y-40'); t.classList.replace('opacity-100', 'opacity-0');
+            }, 3000);
         }
     </script>
 </body>
