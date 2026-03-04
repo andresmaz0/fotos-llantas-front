@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Registro fotografico Sqaulity</title>
+    <title>Registro Fotográfico Squality</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Librería Cropper.js para edición de imagen -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -14,6 +14,7 @@
         body {
             font-family: 'Outfit', sans-serif;
             background-color: #f0fdf4;
+            overscroll-behavior-y: contain;
         }
 
         .tire-card {
@@ -33,21 +34,20 @@
             letter-spacing: 0.5px;
         }
 
-        .delete-btn-overlay {
+        .delete-btn-overlay, .edit-btn-overlay {
             position: absolute;
             top: 10px;
-            right: 10px;
             z-index: 10;
+            transition: transform 0.2s;
         }
 
-        .edit-btn-overlay {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
+        .delete-btn-overlay:active, .edit-btn-overlay:active {
+            transform: scale(0.9);
         }
 
-        /* Estilos para el buscador desplegable */
+        .delete-btn-overlay { right: 10px; }
+        .edit-btn-overlay { left: 10px; }
+
         .dropdown-content {
             max-height: 250px;
             overflow-y: auto;
@@ -57,7 +57,6 @@
             display: block;
         }
 
-        /* Modal de Cropper */
         #cropperModal {
             display: none;
             position: fixed;
@@ -83,14 +82,14 @@
         }
 
         @keyframes pulse-green {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
         }
         .loading-pulse {
             animation: pulse-green 1.5s infinite;
         }
 
-        #selectionModal.hidden { display: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="pb-40">
@@ -107,7 +106,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-extrabold text-slate-800">Squality</h1>
+                        <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Squality</h1>
                         <p class="text-green-600 font-semibold text-sm">Registro de Inspección</p>
                     </div>
                 </div>
@@ -116,42 +115,45 @@
                 </button>
             </div>
 
-            <!-- Sección de Configuración de Carpeta -->
-            <div class="flex flex-col gap-6 mb-6">
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-4 text-[10px]">Nueva Referencia</label>
+            <!-- Sección de Carpetas -->
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Crear Carpeta -->
+                <div class="bg-slate-50/50 p-4 rounded-[30px] border border-slate-100">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2 block">1. Nueva Referencia</label>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <input type="text" id="tireRef" placeholder="Nombre de referencia..." class="w-full bg-slate-50 border-2 border-slate-100 rounded-[24px] px-6 py-4 text-lg font-semibold text-slate-700 focus:border-green-400 outline-none transition-all shadow-inner">
-                        <button type="button" id="createFolderBtn" class="w-full sm:w-auto bg-green-600 text-white font-bold px-8 py-4 rounded-[24px] shadow-md active:scale-95 flex items-center justify-center gap-2">
-                            Crear Carpeta
+                        <input type="text" id="tireRef" placeholder="Ej: 4040, 3450" class="flex-1 bg-white border-2 border-slate-100 rounded-[22px] px-6 py-4 text-lg font-bold text-slate-700 outline-none focus:border-green-400 transition-all shadow-sm">
+                        <button type="button" id="createFolderBtn" class="bg-green-600 hover:bg-green-700 text-white font-black px-8 py-4 rounded-[22px] shadow-lg shadow-green-200 active:scale-95 transition-all flex items-center justify-center gap-2">
+                            CREAR CARPETA
                         </button>
                     </div>
                 </div>
 
-                <div class="flex flex-col gap-2 relative">
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-4 text-[10px]">Carpeta Existente</label>
+                <!-- Buscar Carpeta -->
+                <div class="bg-slate-50/50 p-4 rounded-[30px] border border-slate-100">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2 block">2. Seleccionar Existente</label>
                     <div class="flex flex-col sm:flex-row gap-3">
                         <div class="flex-1 relative">
-                            <input type="text" id="folderSearchInput" placeholder="Buscar carpeta..." class="w-full bg-slate-50 border-2 border-slate-100 rounded-[24px] px-6 py-4 text-lg font-semibold text-slate-700 focus:border-green-400 outline-none transition-all">
-                            <div id="folderDropdown" class="dropdown-content absolute left-0 right-0 top-full mt-2 bg-white border-2 border-slate-100 rounded-[24px] shadow-xl z-[100] p-2">
+                            <input type="text" id="folderSearchInput" placeholder="Escribe para filtrar..." class="w-full bg-white border-2 border-slate-100 rounded-[22px] px-6 py-4 text-lg font-bold text-slate-700 outline-none focus:border-green-400 transition-all shadow-sm">
+                            <div id="folderDropdown" class="dropdown-content absolute left-0 right-0 top-full mt-2 bg-white border-2 border-slate-100 rounded-[24px] shadow-2xl z-[100] p-2 border-t-0">
                                 <div id="folderList" class="flex flex-col gap-1"></div>
                             </div>
                         </div>
-                        <button type="button" id="fetchFoldersBtn" class="w-full sm:w-auto bg-slate-800 text-white font-bold px-8 py-4 rounded-[24px] active:scale-95 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <button type="button" id="fetchFoldersBtn" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-8 py-4 rounded-[22px] active:scale-95 transition-all flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         </button>
                     </div>
-                    
-                    <button type="button" id="selectFolderBtn" class="mt-2 w-full bg-green-100 text-green-700 font-extrabold py-4 rounded-[24px] border-2 border-green-200 uppercase text-sm">
-                        Seleccionar Carpeta
+
+                    <button type="button" id="selectFolderBtn" class="mt-4 w-full bg-green-50 text-green-700 font-black py-4 rounded-[22px] border-2 border-green-200 uppercase text-xs tracking-widest hover:bg-green-100 transition-colors">
+                        Confirmar Selección de Carpeta
                     </button>
 
-                    <div id="activeFolderDisplay" class="hidden mt-2 p-1 bg-green-500 text-white rounded-[20px] flex items-center justify-between shadow-lg">
-                        <div class="flex items-center gap-3 pl-4 py-2 overflow-hidden">
-                            <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full uppercase font-bold flex-shrink-0">Activa</span>
-                            <span id="currentFolderName" class="font-bold truncate">Ninguna</span>
+                    <!-- Indicador de Carpeta Activa -->
+                    <div id="activeFolderDisplay" class="hidden mt-4 p-2 bg-green-600 text-white rounded-[22px] flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-2">
+                        <div class="flex items-center gap-3 pl-4 py-1 overflow-hidden">
+                            <span class="text-[9px] bg-white/20 px-2 py-0.5 rounded-full uppercase font-black tracking-tighter">Sesión Activa</span>
+                            <span id="currentFolderName" class="font-black truncate uppercase tracking-tight"></span>
                         </div>
-                        <button id="removeFolderBtn" class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center ml-2 shadow-inner">
+                        <button id="removeFolderBtn" class="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center ml-2 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                         </button>
                     </div>
@@ -164,25 +166,25 @@
     <div class="max-w-5xl mx-auto px-4">
         <form id="tireForm">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="photoGrid">
-                <!-- Generado dinámicamente -->
+                <!-- Generado dinámicamente mediante JS -->
             </div>
 
-            <div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#f0fdf4] via-[#f0fdf4] to-transparent z-50">
-                <div class="max-w-md mx-auto">
-                    <button type="submit" id="submitBtn" disabled class="btn-large w-full bg-slate-400 text-white font-black shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 uppercase">
-                        Enviar Fotos
+            <div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#f0fdf4] via-[#f0fdf4] to-transparent z-50 pointer-events-none">
+                <div class="max-w-md mx-auto pointer-events-auto">
+                    <button type="submit" id="submitBtn" disabled class="btn-large w-full bg-slate-400 text-white font-black shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 uppercase">
+                        Enviar Inspección
                     </button>
-                    <p id="lockMessage" class="text-center text-[10px] font-bold text-red-500 mt-2 uppercase tracking-widest italic">Selecciona una carpeta para habilitar</p>
+                    <p id="lockMessage" class="text-center text-[10px] font-black text-red-500 mt-2 uppercase tracking-widest italic opacity-80">Selecciona una carpeta para habilitar</p>
                 </div>
             </div>
         </form>
     </div>
 
-    <!-- MODAL DE EDICIÓN (CROPPER) -->
+    <!-- Modal Cropper -->
     <div id="cropperModal">
         <div class="p-4 flex items-center justify-between text-white bg-slate-900 border-b border-white/10">
-            <h3 class="font-bold">Editar Foto</h3>
-            <button id="closeCropper" class="p-2 bg-red-500 rounded-full">
+            <h3 class="font-bold">Optimizar Fotografía</h3>
+            <button id="closeCropper" class="p-2 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -190,44 +192,51 @@
             <img id="cropperImage" src="">
         </div>
         <div class="p-6 bg-slate-900 grid grid-cols-2 gap-4 border-t border-white/10">
-            <button id="rotateCropper" class="py-4 bg-slate-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2">
+            <button id="rotateCropper" class="py-4 bg-slate-800 text-white font-bold rounded-[20px] flex items-center justify-center gap-2 hover:bg-slate-700 transition-all">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                Girar
+                GIRAR 90°
             </button>
-            <button id="saveCropper" class="py-4 bg-green-500 text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/30">
+            <button id="saveCropper" class="py-4 bg-green-500 text-white font-black rounded-[20px] flex items-center justify-center gap-2 shadow-xl shadow-green-500/20 hover:bg-green-400 transition-all">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                Aplicar
+                CONFIRMAR
             </button>
         </div>
     </div>
 
-    <!-- Modales y Toasts -->
-    <div id="selectionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-[40px] p-8 max-w-sm w-full shadow-2xl text-center border-4 border-green-500">
-            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">📁</div>
-            <h2 class="text-2xl font-black text-slate-800 mb-2 italic">¡Seleccionada!</h2>
-            <p class="text-slate-500 font-medium mb-8 leading-relaxed">Carpeta: <span id="modalFolderName" class="text-green-600 font-black uppercase underline"></span></p>
-            <button id="closeModalBtn" class="w-full py-4 bg-slate-800 text-white rounded-full font-bold">CONTINUAR</button>
+    <!-- Modales Informativos -->
+    <div id="selectionModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-[40px] p-8 max-w-sm w-full shadow-2xl text-center border-4 border-green-500 scale-in-center">
+            <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-5xl">📁</div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2 italic tracking-tight">¡CARPETA LISTA!</h2>
+            <p class="text-slate-500 font-medium mb-8">Has seleccionado: <span id="modalFolderName" class="text-green-600 font-black uppercase underline decoration-2"></span></p>
+            <button id="closeModalBtn" class="w-full py-4 bg-slate-900 text-white rounded-[24px] font-black tracking-widest hover:bg-slate-800 active:scale-95 transition-all uppercase">CONTINUAR REGISTRO</button>
         </div>
     </div>
 
-    <div id="statusToast" class="fixed top-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white rounded-[30px] shadow-2xl p-6 transform -translate-y-40 opacity-0 transition-all duration-500 z-[400] border-2 border-green-500">
+    <!-- Toast de Notificación -->
+    <div id="statusToast" class="fixed top-8 left-1/2 -translate-x-1/2 w-[92%] max-w-sm bg-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-6 transform -translate-y-40 opacity-0 transition-all duration-500 z-[400] border-2 border-green-500">
         <div class="flex flex-col items-center text-center gap-3">
-            <div id="statusIcon" class="text-4xl"></div>
+            <div id="statusIcon" class="text-5xl"></div>
             <div>
-                <p id="statusTitle" class="font-extrabold text-slate-800 text-lg"></p>
-                <p id="statusDesc" class="text-sm text-slate-500 font-medium"></p>
+                <p id="statusTitle" class="font-black text-slate-800 text-xl tracking-tight uppercase"></p>
+                <p id="statusDesc" class="text-sm text-slate-500 font-semibold mt-1"></p>
             </div>
         </div>
     </div>
 
     <script>
-        const fields = ["Marca", "Diseño", "Dimensión", "Banda", "Presión", "Carga", "Índice de Carga", "Símbolo de Velocidad", "DOT", "Serie", "Made IN", "Capas", "LR", "PR", "Sellomatic", "Banda Protectora", "Costado"];
+        // NUEVA LISTA DE CAMPOS SOLICITADA
+        const fields = [
+            "MEDIDA", "SERIE 1", "SERIE 2", "SERIE 3", "DOT 1", "DOT 2", "DOT 3",
+            "STICKER", "CAPACIDAD DE CARGA", "PRESION", "INDICE DE CARGA Y VELOCIDAD",
+            "FABRICANTE", "HECHO EN", "TUBULESS", "M+S", "UNIDIRECCIONAL",
+            "BANDA PROTECTORA", "BANDA DE RODAMIENTO", "OTROS", "MODELO", "TIPO DE CARGA AUTO"
+        ];
+
         const ENDPOINT = "https://registro-fotografico-squality-12773091505.northamerica-south1.run.app";
         
         let selectedFolderId = null;
         let selectedFolderName = "";
-        let allFolders = [];
         let cropper = null;
         let currentEditingIndex = null;
 
@@ -236,209 +245,114 @@
         const cropperImage = document.getElementById('cropperImage');
         const submitBtn = document.getElementById('submitBtn');
 
-        // Generar Tarjetas
-        fields.forEach((field, index) => {
-            const card = document.createElement('div');
-            card.className = "tire-card bg-white rounded-[32px] shadow-sm p-6 relative flex flex-col gap-4 border-2 border-transparent";
-            card.id = `card-${index}`;
-            card.innerHTML = `
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-1">Paso ${index + 1}</span>
-                        <h3 class="font-bold text-slate-800 text-base leading-tight">${field}</h3>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" checked class="sr-only peer toggle-send" data-index="${index}">
-                        <div class="w-14 h-8 bg-slate-200 rounded-full peer peer-checked:bg-green-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all"></div>
-                    </label>
-                </div>
-                <div class="relative group">
-                    <button type="button" class="delete-btn-overlay hidden w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg" data-index="${index}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                    <button type="button" class="edit-btn-overlay hidden w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg" data-index="${index}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                    </button>
-                    <input type="file" id="file-${index}" accept="image/*" capture="camera" class="hidden file-input">
-                    <label for="file-${index}" class="file-label block w-full h-56 bg-slate-50 border-4 border-dashed border-slate-100 rounded-[28px] cursor-pointer hover:bg-green-50 flex items-center justify-center overflow-hidden transition-all">
-                        <div class="text-center p-6 preview-placeholder flex flex-col items-center">
-                            <div class="bg-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-md mb-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                </svg>
-                            </div>
-                            <span class="text-xs font-bold text-slate-400 uppercase italic">Cámara</span>
+        // Inicializar Interfaz
+        function init() {
+            fields.forEach((field, index) => {
+                const card = document.createElement('div');
+                card.className = "tire-card bg-white rounded-[32px] shadow-sm p-6 relative flex flex-col gap-4 border-2 border-transparent transition-all";
+                card.id = `card-${index}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-black text-green-500 uppercase tracking-widest mb-1">Imagen ${index + 1}</span>
+                            <h3 class="font-black text-slate-800 text-sm leading-tight uppercase tracking-tight">${field}</h3>
                         </div>
-                        <img src="" class="hidden w-full h-full object-cover img-preview">
-                    </label>
-                </div>
-            `;
-            photoGrid.appendChild(card);
-        });
-
-        // Crear Carpeta
-        createFolderBtn.addEventListener('click', async () => {
-            const reference = document.getElementById('tireRef').value.trim();
-            if (!reference) {
-                showToast("¡Atención!", "Debes escribir una referencia primero.", "error");
-                return;
-            }
-
-            createFolderBtn.disabled = true;
-            createFolderBtn.innerHTML = `<span class="animate-pulse">Creando...</span>`;
-
-            try {
-                const response = await fetch(ENDPOINT + '/api/v1/create-folder', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ folder_name: reference })
-                });
-
-                if (response.ok) {
-                    showToast("Carpeta Creada", `Se ha iniciado el registro para: ${reference}`, "success");
-                } else {
-                    throw new Error();
-                }
-            } catch (err) {
-                // Incluso si falla, informamos al usuario (en este demo mostramos éxito para visualización)
-                showToast("Carpeta Lista", `Referencia "${reference}" registrada.`, "success");
-            } finally {
-                createFolderBtn.disabled = false;
-                createFolderBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Crear Carpeta
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" checked class="sr-only peer toggle-send" data-index="${index}">
+                            <div class="w-12 h-7 bg-slate-200 rounded-full peer peer-checked:bg-green-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-[1.3rem] after:w-[1.3rem] after:transition-all"></div>
+                        </label>
+                    </div>
+                    <div class="relative group">
+                        <button type="button" class="delete-btn-overlay hidden w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-75" data-index="${index}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                        <button type="button" class="edit-btn-overlay hidden w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-75" data-index="${index}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        </button>
+                        <input type="file" id="file-${index}" accept="image/*" capture="camera" class="hidden file-input" data-index="${index}">
+                        <label for="file-${index}" class="file-label block w-full h-48 bg-slate-50 border-4 border-dashed border-slate-100 rounded-[24px] cursor-pointer hover:bg-green-50 hover:border-green-100 flex items-center justify-center overflow-hidden transition-all">
+                            <div class="text-center p-6 preview-placeholder flex flex-col items-center">
+                                <div class="bg-white w-12 h-12 rounded-xl flex items-center justify-center shadow-md mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    </svg>
+                                </div>
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Tomar Foto</span>
+                            </div>
+                            <img src="" class="hidden w-full h-full object-cover img-preview">
+                        </label>
+                    </div>
                 `;
-            }
-        });
-
-        // Lógica de Archivo y Edición
-        photoGrid.addEventListener('change', (e) => {
-            if (e.target.classList.contains('file-input')) {
-                const file = e.target.files[0];
-                if (file) {
-                    currentEditingIndex = e.target.id.split('-')[1];
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        openCropper(ev.target.result);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
-        });
-
-        function openCropper(imageSrc) {
-            cropperImage.src = imageSrc;
-            cropperModal.classList.add('active');
-            if (cropper) cropper.destroy();
-            cropper = new Cropper(cropperImage, {
-                aspectRatio: NaN, // Libre
-                viewMode: 2,
-                dragMode: 'move',
-                autoCropArea: 1,
-                responsive: true,
-                restore: false
+                photoGrid.appendChild(card);
             });
         }
 
-        document.getElementById('rotateCropper').onclick = () => cropper.rotate(90);
-        document.getElementById('closeCropper').onclick = () => {
-            cropperModal.classList.remove('active');
-            document.getElementById(`file-${currentEditingIndex}`).value = "";
-        };
-
-        document.getElementById('saveCropper').onclick = () => {
-            const canvas = cropper.getCroppedCanvas({ maxWidth: 1600, maxHeight: 1600 });
-            canvas.toBlob((blob) => {
-                const card = document.getElementById(`card-${currentEditingIndex}`);
-                const imgPreview = card.querySelector('.img-preview');
-                const fileUrl = URL.createObjectURL(blob);
-                
-                imgPreview.src = fileUrl;
-                imgPreview.classList.remove('hidden');
-                card.querySelector('.preview-placeholder').classList.add('hidden');
-                card.querySelector('.delete-btn-overlay').classList.remove('hidden');
-                card.querySelector('.edit-btn-overlay').classList.remove('hidden');
-                card.classList.add('border-green-400', 'shadow-lg');
-
-                // Guardar el blob para el envío
-                const file = new File([blob], `photo_${currentEditingIndex}.jpg`, { type: "image/jpeg" });
-                const container = new DataTransfer();
-                container.items.add(file);
-                document.getElementById(`file-${currentEditingIndex}`).files = container.files;
-
-                cropperModal.classList.remove('active');
-            }, 'image/jpeg', 0.85);
-        };
-
-        // Re-editar foto existente
-        photoGrid.addEventListener('click', (e) => {
-            const editBtn = e.target.closest('.edit-btn-overlay');
-            if (editBtn) {
-                const idx = editBtn.dataset.index;
-                const img = document.getElementById(`card-${idx}`).querySelector('.img-preview');
-                currentEditingIndex = idx;
-                openCropper(img.src);
-            }
-            const delBtn = e.target.closest('.delete-btn-overlay');
-            if (delBtn) clearImage(delBtn.dataset.index);
-        });
-
-        function clearImage(i) {
-            const c = document.getElementById(`card-${i}`);
-            document.getElementById(`file-${i}`).value = "";
-            c.querySelector('.img-preview').classList.add('hidden');
-            c.querySelector('.preview-placeholder').classList.remove('hidden');
-            c.querySelector('.delete-btn-overlay').classList.add('hidden');
-            c.querySelector('.edit-btn-overlay').classList.add('hidden');
-            c.classList.remove('border-green-400', 'shadow-lg');
-        }
-
-        // --- Gestión de Carpetas ---
+        // Lógica de Carpetas
         document.getElementById('createFolderBtn').onclick = async () => {
-            const ref = document.getElementById('tireRef').value.trim();
-            if (!ref) { showToast("¡Atención!", "Escribe una referencia", "error"); return; }
-            showToast("Procesando", `Creando carpeta: ${ref}`, "success");
+            const btn = document.getElementById('createFolderBtn');
+            const name = document.getElementById('tireRef').value.trim();
+            if (!name) { showToast("Error", "Ingresa una referencia", "error"); return; }
+            
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+            
+            try {
+                const res = await fetch(`${ENDPOINT}/api/v1/create-folder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder_name: name })
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    selectedFolderId = data.folder_id;
+                    selectedFolderName = name;
+                    updateSelectionUI();
+                    showToast("¡Listo!", "Carpeta creada y seleccionada", "success");
+                }
+            } catch (e) {
+                showToast("Fallo", "Error al crear la carpeta", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "CREAR CARPETA";
+            }
         };
 
         document.getElementById('fetchFoldersBtn').onclick = async () => {
             const btn = document.getElementById('fetchFoldersBtn');
-            btn.innerHTML = `<svg class="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+            
             try {
-                const res = await fetch(ENDPOINT + '/api/v1/list-folders');
+                const res = await fetch(`${ENDPOINT}/api/v1/list-folders`);
                 const data = await res.json();
                 if (data.status === "success") {
-                    allFolders = data.folders;
-                    renderFolderList(allFolders);
+                    renderFolderList(data.folders);
                     document.getElementById('folderDropdown').classList.add('show');
                 }
             } catch (e) {
                 showToast("Error", "No se pudo cargar la lista", "error");
             } finally {
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>`;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>`;
             }
         };
 
         function renderFolderList(folders) {
             const list = document.getElementById('folderList');
-            list.innerHTML = folders.length ? '' : '<p class="p-4 text-center text-slate-400 italic">No hay resultados</p>';
+            list.innerHTML = folders.length ? '' : '<p class="p-4 text-center text-slate-400 font-bold italic">Sin resultados</p>';
             folders.forEach(f => {
-                const b = document.createElement('button');
-                b.className = "text-left w-full p-4 hover:bg-green-50 rounded-xl font-bold flex gap-3 truncate border-b last:border-0";
-                b.innerHTML = `<span>📁</span> <span class="truncate">${f.name}</span>`;
-                b.onclick = () => {
+                const btn = document.createElement('button');
+                btn.className = "text-left w-full p-4 hover:bg-green-50 rounded-xl font-bold flex gap-3 truncate transition-colors border-b last:border-0";
+                btn.innerHTML = `<span>📂</span> <span class="truncate uppercase text-xs">${f.name}</span>`;
+                btn.onclick = () => {
                     document.getElementById('folderSearchInput').value = f.name;
                     selectedFolderId = f.id;
                     selectedFolderName = f.name;
                     document.getElementById('folderDropdown').classList.remove('show');
                 };
-                list.appendChild(b);
+                list.appendChild(btn);
             });
         }
 
-        document.getElementById('selectFolderBtn').onclick = () => {
-            if (!selectedFolderId) { showToast("Aviso", "Busca y elige una carpeta", "error"); return; }
+        function updateSelectionUI() {
             document.getElementById('modalFolderName').textContent = selectedFolderName;
             document.getElementById('selectionModal').classList.remove('hidden');
             document.getElementById('activeFolderDisplay').classList.remove('hidden');
@@ -446,7 +360,11 @@
             document.getElementById('submitBtn').disabled = false;
             document.getElementById('submitBtn').classList.replace('bg-slate-400', 'bg-green-600');
             document.getElementById('lockMessage').classList.add('hidden');
-            document.getElementById('selectFolderBtn').classList.add('hidden');
+        }
+
+        document.getElementById('selectFolderBtn').onclick = () => {
+            if (!selectedFolderId) { showToast("Aviso", "Busca y elige una carpeta primero", "error"); return; }
+            updateSelectionUI();
         };
 
         document.getElementById('removeFolderBtn').onclick = () => {
@@ -455,56 +373,143 @@
             document.getElementById('submitBtn').disabled = true;
             document.getElementById('submitBtn').classList.replace('bg-green-600', 'bg-slate-400');
             document.getElementById('lockMessage').classList.remove('hidden');
-            document.getElementById('selectFolderBtn').classList.remove('hidden');
         };
 
+        // Lógica de Edición y Fotos
+        photoGrid.onchange = (e) => {
+            if (e.target.classList.contains('file-input')) {
+                const file = e.target.files[0];
+                if (file) {
+                    currentEditingIndex = e.target.dataset.index;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        cropperImage.src = ev.target.result;
+                        cropperModal.classList.add('active');
+                        if (cropper) cropper.destroy();
+                        cropper = new Cropper(cropperImage, { viewMode: 2, aspectRatio: NaN, autoCropArea: 1 });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        };
+
+        document.getElementById('saveCropper').onclick = () => {
+            const canvas = cropper.getCroppedCanvas({ maxWidth: 1600 });
+            canvas.toBlob((blob) => {
+                const card = document.getElementById(`card-${currentEditingIndex}`);
+                const preview = card.querySelector('.img-preview');
+                const url = URL.createObjectURL(blob);
+                
+                preview.src = url;
+                preview.classList.remove('hidden');
+                card.querySelector('.preview-placeholder').classList.add('hidden');
+                card.querySelector('.delete-btn-overlay').classList.remove('hidden');
+                card.querySelector('.edit-btn-overlay').classList.remove('hidden');
+                card.classList.add('border-green-400', 'shadow-xl', 'scale-[1.02]');
+
+                const file = new File([blob], `img_${currentEditingIndex}.jpg`, { type: "image/jpeg" });
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                document.getElementById(`file-${currentEditingIndex}`).files = dt.files;
+
+                cropperModal.classList.remove('active');
+            }, 'image/jpeg', 0.85);
+        };
+
+        document.getElementById('rotateCropper').onclick = () => cropper.rotate(90);
+        document.getElementById('closeCropper').onclick = () => cropperModal.classList.remove('active');
         document.getElementById('closeModalBtn').onclick = () => document.getElementById('selectionModal').classList.add('hidden');
 
-        // Envío
+        photoGrid.onclick = (e) => {
+            const btnEdit = e.target.closest('.edit-btn-overlay');
+            const btnDel = e.target.closest('.delete-btn-overlay');
+            if (btnEdit) {
+                currentEditingIndex = btnEdit.dataset.index;
+                const src = document.getElementById(`card-${currentEditingIndex}`).querySelector('.img-preview').src;
+                cropperImage.src = src;
+                cropperModal.classList.add('active');
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(cropperImage, { viewMode: 2, aspectRatio: NaN, autoCropArea: 1 });
+            }
+            if (btnDel) {
+                const i = btnDel.dataset.index;
+                const card = document.getElementById(`card-${i}`);
+                document.getElementById(`file-${i}`).value = "";
+                card.querySelector('.img-preview').classList.add('hidden');
+                card.querySelector('.preview-placeholder').classList.remove('hidden');
+                card.querySelector('.delete-btn-overlay').classList.add('hidden');
+                card.querySelector('.edit-btn-overlay').classList.add('hidden');
+                card.classList.remove('border-green-400', 'shadow-xl', 'scale-[1.02]');
+            }
+        };
+
+        // Enviar Formulario
         document.getElementById('tireForm').onsubmit = async (e) => {
             e.preventDefault();
             const formData = new FormData();
             formData.append('folder_id', selectedFolderId);
             
-            let count = 0;
-            document.querySelectorAll('.file-input').forEach((input, i) => {
+            let photoCount = 0;
+            fields.forEach((name, i) => {
+                const input = document.getElementById(`file-${i}`);
                 const toggle = document.querySelector(`.toggle-send[data-index="${i}"]`);
                 if (toggle.checked && input.files[0]) {
-                    formData.append(fields[i].toLowerCase().replace(/ /g, '_'), input.files[0]);
-                    count++;
+                    // Limpiar el nombre del campo para el backend
+                    const safeName = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, "_");
+                    formData.append(safeName, input.files[0]);
+                    photoCount++;
                 }
             });
 
-            if (!count) { showToast("Error", "No hay fotos marcadas", "error"); return; }
+            if (!photoCount) { showToast("Error", "No hay fotos marcadas para subir", "error"); return; }
 
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<span class="loading-pulse">SUBIENDO...</span>`;
-            
+            submitBtn.innerHTML = `<span class="loading-pulse tracking-widest">SUBIENDO ARCHIVOS...</span>`;
+
             try {
-                const res = await fetch(ENDPOINT + '/api/v1/upload', { method: 'POST', body: formData });
+                const res = await fetch(`${ENDPOINT}/api/v1/upload`, { method: 'POST', body: formData });
                 if (res.ok) {
-                    showToast("¡Éxito!", "Fotos enviadas correctamente", "success");
-                    document.getElementById('tireForm').reset();
-                    fields.forEach((_, i) => clearImage(i));
-                }
+                    showToast("¡EXITO!", "Inspección guardada correctamente", "success");
+                    setTimeout(() => location.reload(), 3500);
+                } else { throw new Error(); }
             } catch (err) {
-                showToast("Error", "Fallo al subir archivos", "error");
-            } finally {
+                showToast("FALLO", "No se pudieron subir las fotos", "error");
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = "Enviar Fotos";
+                submitBtn.innerHTML = "Enviar Inspección";
             }
         };
 
+        // Notificaciones
         function showToast(title, desc, type) {
             const t = document.getElementById('statusToast');
             t.classList.replace('-translate-y-40', 'translate-y-0'); t.classList.replace('opacity-0', 'opacity-100');
             document.getElementById('statusTitle').textContent = title;
             document.getElementById('statusDesc').textContent = desc;
-            document.getElementById('statusIcon').innerHTML = type === 'success' ? '✅' : '⚠️';
+            document.getElementById('statusIcon').innerHTML = type === 'success' ? '🚀' : '⚠️';
             setTimeout(() => {
                 t.classList.replace('translate-y-0', '-translate-y-40'); t.classList.replace('opacity-100', 'opacity-0');
-            }, 3000);
+            }, 3500);
         }
+
+        // Master Toggle
+        document.getElementById('masterToggleBtn').onclick = () => {
+            const toggles = document.querySelectorAll('.toggle-send');
+            const anyUnchecked = Array.from(toggles).some(t => !t.checked);
+            toggles.forEach(t => t.checked = anyUnchecked);
+        };
+
+        // Búsqueda en tiempo real
+        document.getElementById('folderSearchInput').oninput = (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = Array.from(document.querySelectorAll('#folderList button')).filter(btn => {
+                const visible = btn.textContent.toLowerCase().includes(term);
+                btn.style.display = visible ? 'flex' : 'none';
+                return visible;
+            });
+            document.getElementById('folderDropdown').classList.toggle('show', term.length > 0);
+        };
+
+        init();
     </script>
 </body>
 </html>
