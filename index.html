@@ -105,11 +105,30 @@
         #pwaInstallBtn {
             transition: all 0.3s ease;
         }
+
+        /* Banner de Offline */
+        #offlineBanner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f59e0b; /* Ambar para advertencia, no bloqueante */
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-weight: 800;
+            z-index: 1000;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body class="pb-40">
 
     <!-- Header -->
+    <div id="offlineBanner" style="display:none; background:#f59e0b; color:white; text-align:center; padding:10px; position:fixed; top:0; width:100%; z-index:1000;">Sin conexión: Puedes preparar fotos, pero no enviarlas.</div>
     <div class="bg-white rounded-b-[40px] shadow-sm p-6 mb-8 border-b-2 border-green-100">
         <div class="max-w-4xl mx-auto">
             <div class="flex items-center justify-between mb-6">
@@ -251,6 +270,9 @@
     </div>
 
     <script>
+        window.addEventListener('offline', () => document.getElementById('offlineBanner').style.display = 'block');
+        window.addEventListener('online', () => document.getElementById('offlineBanner').style.display = 'none');
+
         // --- 1. LÓGICA DE INSTALACIÓN PWA ---
         let deferredPrompt;
         const installBtn = document.getElementById('pwaInstallBtn');
@@ -292,8 +314,20 @@
             console.log('App instalada con éxito');
         });
 
+        // --- 2. DETECCIÓN DE INTERNET ---
+        function updateOnlineStatus() {
+            const banner = document.getElementById('offlineBanner');
+            if (navigator.onLine) {
+                banner.style.display = 'none';
+            } else {
+                banner.style.display = 'block';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
 
-        // --- 2. LÓGICA DE NEGOCIO (SQUALITY) ---
+        // --- 3. LÓGICA DE NEGOCIO (SQUALITY) ---
         const fields = [
             "MEDIDA", "SERIE 1", "SERIE 2", "SERIE 3", "DOT 1", "DOT 2", "DOT 3",
             "STICKER", "CAPACIDAD DE CARGA", "PRESION", "INDICE DE CARGA Y VELOCIDAD",
