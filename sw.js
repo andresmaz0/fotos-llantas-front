@@ -1,4 +1,4 @@
-const CACHE_NAME = 'squality-v1';
+const CACHE_NAME = 'squality-v1.1';
 const ASSETS = [
   'index.html',
   'https://cdn.tailwindcss.com',
