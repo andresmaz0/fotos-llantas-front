@@ -277,6 +277,13 @@
         let deferredPrompt;
         const installBtn = document.getElementById('pwaInstallBtn');
 
+        const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+        if (isIOS && !isStandalone) {
+            installBtn.classList.remove('hidden');
+        }
+
         // Registro del Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
