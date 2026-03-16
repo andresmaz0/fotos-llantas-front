@@ -326,6 +326,7 @@
             "Modelo", "LR/PR", "Tipo de carga Auto"
         ];
 
+
         const ENDPOINT = "https://registro-fotografico-squality-12773091505.northamerica-south1.run.app";
         let selectedFolderId = null, selectedFolderName = "", cropper = null, currentEditingIndex = null;
 
@@ -437,7 +438,102 @@
             document.getElementById('lockMessage').classList.add('hidden');
         }
 
-        document.getElementById('selectFolderBtn').onclick = () => { if (selectedFolderId) updateSelectionUI(); else showToast("Aviso", "Elige una carpeta", "error"); };
+        // 1. Nueva función para cargar y mapear imágenes existentes
+        async function loadFolderImages(folderId) {
+            const url = `${ENDPOINT}/api/v1/folder-images?folder_id=${folderId}`;
+            let retries = 3;
+            let delay = 1000;
+
+            // Función auxiliar para normalizar nombres (quita acentos, espacios y extensiones)
+            const normalize = (str) => str.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[ /]/g, "_")
+                .replace(/\.(jpg|jpeg|png)$/i, "");
+
+            while (retries > 0) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Error en servidor');
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === "success") {
+                        const imagesMap = data.images || {};
+                        const imageNames = Object.keys(imagesMap);
+                        
+                        if (imageNames.length === 0) {
+                            showToast("Info", "En la carpeta seleccionada no hay fotos disponibles", "error");
+                            return;
+                        }
+
+                        let loadedCount = 0;
+                        
+                        // Mapear imágenes recibidas a los campos del formulario
+                        fields.forEach((fieldName, index) => {
+                            const normalizedField = normalize(fieldName);
+                            
+                            // Buscar si alguna de las imágenes del servidor coincide con el campo
+                            const matchName = imageNames.find(imgName => normalize(imgName) === normalizedField);
+                            
+                            if (matchName) {
+                                const base64Data = imagesMap[matchName];
+                                const card = document.getElementById(`card-${index}`);
+                                const preview = card.querySelector('.img-preview');
+                                
+                                // Asignar imagen al preview
+                                const imgSrc = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
+                                preview.src = imgSrc;
+                                
+                                // Actualizar UI de la tarjeta
+                                preview.classList.remove('hidden');
+                                card.querySelector('.preview-placeholder').classList.add('hidden');
+                                card.querySelector('.delete-btn-overlay').classList.remove('hidden');
+                                card.querySelector('.edit-btn-overlay').classList.remove('hidden');
+                                card.classList.add('border-green-400', 'shadow-xl', 'scale-[1.02]');
+                                
+                                // Convertir Base64 a Blob para el input file
+                                fetch(imgSrc)
+                                    .then(res => res.blob())
+                                    .then(blob => {
+                                        const file = new File([blob], matchName, { type: "image/jpeg" });
+                                        const dt = new DataTransfer();
+                                        dt.items.add(file);
+                                        document.getElementById(`file-${index}`).files = dt.files;
+                                    });
+                                    
+                                loadedCount++;
+                            }
+                        });
+
+                        if (loadedCount < imageNames.length) {
+                            showToast("Aviso", "No se pudieron cargar todas las fotos (nombres no coinciden)", "error");
+                        }
+                    }
+                    return; // Éxito, salir del bucle
+
+                } catch (error) {
+                    retries--;
+                    if (retries === 0) {
+                        showToast("Error crítico", "No se pudo conectar con el servicio de imágenes", "error");
+                        return;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Exponential backoff
+                }
+            }
+        }
+
+        // 2. Actualización del evento del botón Confirmar Selección
+        document.getElementById('selectFolderBtn').onclick = async () => { 
+            if (selectedFolderId) {
+                // Primero actualizamos la UI básica
+                updateSelectionUI();
+                // Luego disparamos la carga de imágenes
+                await loadFolderImages(selectedFolderId);
+            } else {
+                showToast("Aviso", "Elige una carpeta", "error"); 
+            }
+        };
         document.getElementById('removeFolderBtn').onclick = () => { selectedFolderId = null; document.getElementById('activeFolderDisplay').classList.add('hidden'); submitBtn.disabled = true; submitBtn.classList.replace('bg-green-600', 'bg-slate-400'); document.getElementById('lockMessage').classList.remove('hidden'); };
 
         // Lógica de Edición y Fotos
