@@ -335,6 +335,37 @@
         const cropperImage = document.getElementById('cropperImage');
         const submitBtn = document.getElementById('submitBtn');
 
+        // 2. Vinculación del evento al botón de eliminar carpeta
+        const removeBtn = document.getElementById('removeFolderBtn');
+        if (removeBtn) {
+            removeBtn.onclick = () => { 
+                // 1. Resetear variables globales de la carpeta
+                selectedFolderId = null; 
+                selectedFolderName = "";
+                
+                // 2. Actualizar UI de la selección
+                const folderDisplay = document.getElementById('activeFolderDisplay');
+                if (folderDisplay) folderDisplay.classList.add('hidden'); 
+                
+                // 3. Bloquear el botón de envío
+                if (submitBtn) {
+                    submitBtn.disabled = true; 
+                    submitBtn.classList.remove('bg-green-600');
+                    submitBtn.classList.add('bg-slate-400');
+                    submitBtn.innerHTML = "Enviar Inspección";
+                }
+
+                const lockMsg = document.getElementById('lockMessage');
+                if (lockMsg) lockMsg.classList.remove('hidden'); 
+                
+                // 4. EJECUTAR LIMPIEZA DE CAMPOS
+                clearPhotoFields();
+                
+                // 5. Notificar al usuario
+                showToast("Info", "Carpeta deseleccionada y fotos limpiadas", "success");
+            };
+        }
+
         // Inicializar Interfaz
         function init() {
             photoGrid.innerHTML = "";
@@ -523,6 +554,46 @@
             }
         }
 
+        // 1. Nueva función para resetear el estado de todas las tarjetas de fotos
+        function clearPhotoFields() {
+            // Recorremos todos los índices basados en el array 'fields'
+            fields.forEach((_, index) => {
+                const card = document.getElementById(`card-${index}`);
+                if (!card) return; // Salvaguarda por si el elemento no existe
+
+                const fileInput = document.getElementById(`file-${index}`);
+                const preview = card.querySelector('.img-preview');
+                const placeholder = card.querySelector('.preview-placeholder');
+                const deleteBtn = card.querySelector('.delete-btn-overlay');
+                const editBtn = card.querySelector('.edit-btn-overlay');
+                
+                // Limpiar input de archivo y su lista de archivos interna
+                if (fileInput) {
+                    fileInput.value = "";
+                    // Forzar limpieza de DataTransfer si existe
+                    try {
+                        fileInput.files = new DataTransfer().files;
+                    } catch (e) {
+                        // Fallback para navegadores antiguos
+                    }
+                }
+                
+                // Resetear visualización de la imagen
+                if (preview) {
+                    preview.src = "";
+                    preview.classList.add('hidden');
+                }
+                
+                // Mostrar placeholder y ocultar botones de edición/borrado
+                if (placeholder) placeholder.classList.remove('hidden');
+                if (deleteBtn) deleteBtn.classList.add('hidden');
+                if (editBtn) editBtn.classList.add('hidden');
+                
+                // Quitar estilos visuales de "tarjeta completada"
+                card.classList.remove('border-green-400', 'shadow-xl', 'scale-[1.02]');
+            });
+        };
+
         // 2. Actualización del evento del botón Confirmar Selección
         document.getElementById('selectFolderBtn').onclick = async () => { 
             if (selectedFolderId) {
@@ -534,7 +605,15 @@
                 showToast("Aviso", "Elige una carpeta", "error"); 
             }
         };
-        document.getElementById('removeFolderBtn').onclick = () => { selectedFolderId = null; document.getElementById('activeFolderDisplay').classList.add('hidden'); submitBtn.disabled = true; submitBtn.classList.replace('bg-green-600', 'bg-slate-400'); document.getElementById('lockMessage').classList.remove('hidden'); };
+        document.getElementById('removeFolderBtn').onclick = () => {
+        selectedFolderId = null; 
+        document.getElementById('activeFolderDisplay').classList.add('hidden'); 
+        submitBtn.disabled = true; submitBtn.classList.replace('bg-green-600', 'bg-slate-400'); 
+        document.getElementById('lockMessage').classList.remove('hidden'); 
+        // Limpiar los campos de fotos
+        clearPhotoFields();
+        showToast("Info", "Carpeta deseleccionada y campos limpiados", "success");
+        };
 
         // Lógica de Edición y Fotos
         photoGrid.onchange = (e) => {
